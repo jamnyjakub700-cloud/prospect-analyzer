@@ -1,14 +1,16 @@
 # Prospect Analyzer
 
-AI-powered prospect research agent that analyzes e-commerce websites for Digital Product Passport (DPP) readiness. Uses Anthropic's Managed Agents API to perform deep analysis and generate branded HTML reports.
+AI-powered prospect research agent that analyzes websites and generates branded HTML reports. Uses Anthropic's Managed Agents API to perform deep analysis with configurable industry-specific criteria.
 
 ## What it does
 
 1. Takes a website URL as input
-2. An AI agent crawls the site, analyzes product pages, sustainability claims, supply chain transparency, and compliance signals
-3. Produces a detailed Markdown analysis with a DPP readiness score (0-10)
+2. An AI agent crawls the site, analyzes content, products, and compliance signals
+3. Produces a detailed Markdown analysis with a readiness score (0-10)
 4. Generates a branded HTML report suitable for sharing with prospects
 5. Optionally deploys reports to a static hosting service (Netlify)
+
+**Fully configurable** — change `industry_config.py` to analyze any industry (compliance, security, UX, sustainability, etc.).
 
 ## Prerequisites
 
@@ -20,7 +22,7 @@ AI-powered prospect research agent that analyzes e-commerce websites for Digital
 
 ```bash
 # Clone the repo
-git clone https://github.com/jamnyjakub700-cloud/prospect-analyzer.git
+git clone https://github.com/YOUR_USERNAME/prospect-analyzer.git
 cd prospect-analyzer
 
 # Install dependencies
@@ -108,11 +110,18 @@ The Managed Agent uses Anthropic's hosted agent infrastructure with:
 - **Tool use** for web browsing, content extraction, and analysis
 - **Structured output** with DPP readiness scoring across multiple dimensions
 
-The agent evaluates: product data completeness, material/composition info, sustainability claims, supply chain transparency, existing compliance signals, and technical infrastructure readiness.
+The agent evaluates the target website based on the criteria defined in `industry_config.py`. The default configuration performs a general readiness assessment, but you can customize the system prompt, scoring regex, and report branding for any industry.
 
-## Author
+### Customizing for your industry
 
-**Jakub Jamny** — AI automation specialist
+Edit `industry_config.py` to change:
+- **SYSTEM_PROMPT** — What the agent analyzes (compliance criteria, scoring rubric)
+- **USER_MESSAGE_TEMPLATE** — How the analysis request is phrased
+- **REPORT_*_** — HTML report branding (title, subtitle, score label)
+- **BRAND_REGEX / SCORE_REGEX** — How to extract metadata from analysis output
 
-- [LinkedIn](https://www.linkedin.com/in/jakub-jamn%C3%BD-3a0410246)
-- [Website](https://jakubjamny.com)
+See the example presets at the bottom of `industry_config.py` for DPP/textile, SaaS security, and e-commerce UX configurations.
+
+## License
+
+MIT

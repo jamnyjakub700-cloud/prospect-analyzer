@@ -1,7 +1,7 @@
 """
-setup_agent.py — Vytvoření Managed Agent a Environment pro DPP analýzu fashion brandů.
+setup_agent.py — Create a Managed Agent and Environment via Anthropic API.
 
-Používá raw HTTP requesty (requests knihovna) proti Anthropic Managed Agents API.
+Uses raw HTTP requests (requests library) against the Anthropic Managed Agents API.
 Beta header: managed-agents-2026-04-01
 """
 
@@ -9,16 +9,17 @@ import json
 import os
 import requests
 from dotenv import load_dotenv
+from industry_config import AGENT_NAME, COMPANY_NAME, SYSTEM_PROMPT
 
 load_dotenv()
 
-# === Konfigurace ===
+# === Configuration ===
 API_KEY = os.getenv("ANTHROPIC_API_KEY")
 BASE_URL = "https://api.anthropic.com"
 BETA_HEADER = "managed-agents-2026-04-01"
 CONFIG_FILE = "config.json"
 
-# Společné hlavičky pro všechny requesty
+# Common headers for all requests
 HEADERS = {
     "x-api-key": API_KEY,
     "anthropic-version": "2023-06-01",
@@ -26,55 +27,13 @@ HEADERS = {
     "content-type": "application/json",
 }
 
-# System prompt zaměřený na DPP analýzu fashion e-shopů
-SYSTEM_PROMPT = """Jsi expert na Digital Product Passports (DPP) podle nařízení ESPR (Ecodesign for Sustainable Products Regulation) pro textilní průmysl.
 
-Tvůj úkol:
-1. Navštiv zadaný e-shop (URL) a prozkoumej jeho produkty.
-2. Identifikuj: název značky, typy produktů, použité materiály, cenové rozpětí, počet produktů.
-3. Zanalyzuj DPP readiness — jaká data značka již má a jaká bude potřebovat podle ESPR pro textil.
-
-ESPR požadavky pro textil (platné od 2028):
-- Složení materiálů (přesné % podíly vláken)
-- Země původu / výroby
-- Informace o opravitelnosti a recyklovatelnosti
-- Uhlíková stopa (Carbon Footprint) a LCA data
-- Informace o dodavatelském řetězci (supply chain traceability)
-- Návod na údržbu a prodloužení životnosti
-- Informace o nebezpečných látkách (REACH compliance)
-- QR kód / digitální nosič pro přístup k DPP
-
-Výstup napiš v češtině jako strukturovanou analýzu (~1 strana A4):
-
-# DPP Analýza: [Název značky]
-
-## 1. Profil značky
-(název, web, segment, cenové rozpětí, počet produktů)
-
-## 2. Produktové portfolio
-(typy produktů, hlavní materiály, kategorie)
-
-## 3. Současný stav dat
-(jaké informace značka už uvádí na webu — materiály, složení, země původu atd.)
-
-## 4. DPP Gap analýza
-(co chybí pro splnění ESPR požadavků — tabulka s checklistem)
-
-## 5. Doporučení
-(konkrétní kroky pro přípravu na DPP, prioritizované podle náročnosti)
-
-## 6. Shrnutí
-(celkové DPP readiness skóre 1-10, hlavní rizika, odhadovaná náročnost implementace)
-
-Používej data přímo z webu. Buď konkrétní — uváděj příklady produktů a cen."""
-
-
-def vytvor_agenta():
-    """Vytvoří Managed Agent přes POST /v1/agents"""
-    print(">>> Vytvářím agenta...")
+def create_agent():
+    """Create a Managed Agent via POST /v1/agents"""
+    print(">>> Creating agent...")
 
     payload = {
-        "name": "cyrcid-prospect-analyzer",
+        "name": AGENT_NAME,
         "model": "claude-sonnet-4-6",
         "system": SYSTEM_PROMPT,
         "tools": [
@@ -92,7 +51,7 @@ def vytvor_agenta():
 
     if response.status_code != 200:
         print(f"    Error: {response.text}")
-        raise Exception(f"Nepodařilo se vytvořit agenta: {response.status_code}")
+        raise Exception(f"Failed to create agent: {response.status_code}")
 
     data = response.json()
     print(f"    Agent ID: {data['id']}")
@@ -100,15 +59,15 @@ def vytvor_agenta():
     return data
 
 
-def vytvor_environment():
-    """Vytvoří cloud environment přes POST /v1/environments"""
-    print(">>> Vytvářím environment...")
+def create_environment():
+    """Create a cloud environment via POST /v1/environments"""
+    print(">>> Creating environment...")
 
     payload = {
-        "name": "prospect-analyzer-env",
+        "name": f"{AGENT_NAME}-env",
         "config": {
             "type": "cloud",
-            # Neomezený síťový přístup — agent potřebuje přistupovat k webům
+            # Unrestricted network access — agent needs to browse websites
             "networking": {"type": "unrestricted"},
         },
     }
@@ -123,15 +82,15 @@ def vytvor_environment():
 
     if response.status_code != 200:
         print(f"    Error: {response.text}")
-        raise Exception(f"Nepodařilo se vytvořit environment: {response.status_code}")
+        raise Exception(f"Failed to create environment: {response.status_code}")
 
     data = response.json()
     print(f"    Environment ID: {data['id']}")
     return data
 
 
-def uloz_config(agent_data, environment_data):
-    """Uloží agent_id a environment_id do config.json"""
+def save_config(agent_data, environment_data):
+    """Save agent_id and environment_id to config.json"""
     config = {
         "agent_id": agent_data["id"],
         "agent_version": agent_data["version"],
@@ -143,32 +102,32 @@ def uloz_config(agent_data, environment_data):
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
 
-    print(f">>> Konfigurace uložena do {CONFIG_FILE}")
+    print(f">>> Configuration saved to {CONFIG_FILE}")
     return config
 
 
 def main():
     if not API_KEY:
-        print("CHYBA: ANTHROPIC_API_KEY není nastavený. Zkontroluj .env soubor.")
+        print("ERROR: ANTHROPIC_API_KEY not set. Check your .env file.")
         return
 
     print("=" * 60)
-    print("cyrcID Prospect Analyzer — Setup")
+    print(f"{COMPANY_NAME} — Setup")
     print("=" * 60)
 
-    # Krok 1: Vytvoř agenta
-    agent_data = vytvor_agenta()
+    # Step 1: Create agent
+    agent_data = create_agent()
 
-    # Krok 2: Vytvoř environment
-    environment_data = vytvor_environment()
+    # Step 2: Create environment
+    environment_data = create_environment()
 
-    # Krok 3: Ulož konfiguraci
-    config = uloz_config(agent_data, environment_data)
+    # Step 3: Save configuration
+    config = save_config(agent_data, environment_data)
 
     print()
     print("=" * 60)
-    print("Setup dokončen! Nyní můžeš spustit analýzu:")
-    print(f"  python run_analysis.py https://www.laklara.cz")
+    print("Setup complete! Now you can run an analysis:")
+    print(f"  python run_analysis.py https://www.example.com")
     print("=" * 60)
 
 
