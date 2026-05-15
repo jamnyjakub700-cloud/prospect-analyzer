@@ -1,0 +1,8 @@
+.env
+config.json
+output/
+site/
+__pycache__/
+.DS_Store
+*.pyc
+.claude/

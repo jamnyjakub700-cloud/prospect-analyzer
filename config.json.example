@@ -1,0 +1,7 @@
+{
+  "agent_id": "your_agent_id",
+  "agent_version": 1,
+  "environment_id": "your_environment_id",
+  "model": "claude-sonnet-4-6",
+  "beta_header": "managed-agents-2026-04-01"
+}
