@@ -18,49 +18,54 @@ AI-powered prospect research agent that analyzes websites and generates branded 
 - Anthropic API key with Managed Agents access
 - (Optional) Netlify site for report hosting
 
-## Setup
+## Quick Start
 
-```bash
-# Clone the repo
-git clone https://github.com/YOUR_USERNAME/prospect-analyzer.git
-cd prospect-analyzer
+1. **Clone and install dependencies**
 
-# Install dependencies
-pip install -r requirements.txt
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/prospect-analyzer.git
+   cd prospect-analyzer
+   pip install -r requirements.txt
+   ```
 
-# Configure environment
-cp .env.example .env
-# Edit .env with your Anthropic API key
+2. **Set your API key**
 
-# Configure agent (copy and edit with your agent/environment IDs)
-cp config.json.example config.json
-```
+   ```bash
+   cp .env.example .env
+   # Edit .env — add your ANTHROPIC_API_KEY
+   ```
 
-### Create the Managed Agent
+3. **Create the Managed Agent**
 
-```bash
-python setup_agent.py
-```
+   ```bash
+   python setup_agent.py
+   ```
 
-This creates an agent and environment via the Anthropic API. The resulting IDs are saved to `config.json`.
+   This provisions an agent and environment via the Anthropic API and saves the IDs to `config.json`.
 
-## Usage
+4. **Customize for your use case**
 
-### Run an analysis
+   Edit `industry_config.py` to define what the agent analyzes (see [Configuration Examples](#configuration-examples) below).
 
-```bash
-python run_analysis.py https://www.example-shop.com
-```
+5. **Run an analysis**
 
-Output is saved to `output/{domain}-analysis.md`.
+   ```bash
+   python run_analysis.py https://www.example-shop.com
+   ```
 
-### Generate HTML reports
+   Output is saved to `output/{domain}-analysis.md`.
 
-```bash
-python generate_site.py
-```
+6. **Generate an HTML report**
 
-Converts all Markdown analyses in `output/` to branded HTML files in `site/`.
+   ```bash
+   python run_analysis.py https://www.example-shop.com --html
+   ```
+
+   Or batch-convert all existing analyses:
+
+   ```bash
+   python generate_site.py
+   ```
 
 ### Deploy to Netlify (optional)
 
@@ -108,7 +113,7 @@ The Managed Agent uses Anthropic's hosted agent infrastructure with:
 
 - **SSE streaming** for real-time output
 - **Tool use** for web browsing, content extraction, and analysis
-- **Structured output** with DPP readiness scoring across multiple dimensions
+- **Structured output** with readiness scoring across multiple dimensions
 
 The agent evaluates the target website based on the criteria defined in `industry_config.py`. The default configuration performs a general readiness assessment, but you can customize the system prompt, scoring regex, and report branding for any industry.
 
@@ -120,7 +125,48 @@ Edit `industry_config.py` to change:
 - **REPORT_*_** — HTML report branding (title, subtitle, score label)
 - **BRAND_REGEX / SCORE_REGEX** — How to extract metadata from analysis output
 
-See the example presets at the bottom of `industry_config.py` for DPP/textile, SaaS security, and e-commerce UX configurations.
+## Configuration Examples
+
+Below are two examples showing how to adapt `industry_config.py` for different industries. You only need to override the key variables — everything else uses sensible defaults.
+
+### E-commerce UX Audit
+
+Analyze online stores for usability issues and conversion optimization opportunities.
+
+```python
+SYSTEM_PROMPT = """You are a UX and conversion optimization expert.
+Evaluate the given e-commerce website across: navigation clarity,
+product page completeness, checkout friction, mobile responsiveness,
+page load indicators, and trust signals (reviews, security badges).
+Score each dimension 1-10 and provide an overall conversion readiness
+score...."""
+
+USER_MESSAGE_TEMPLATE = (
+    "Analyze this e-commerce store's UX and conversion readiness: {url}\n\n"
+    "Browse product pages, attempt the checkout flow, and check mobile layout."
+)
+
+REPORT_HEADER_TAG = "UX & Conversion Assessment"
+```
+
+### SaaS Security Compliance
+
+Assess a SaaS product's public posture against SOC 2 and ISO 27001 requirements.
+
+```python
+SYSTEM_PROMPT = """You are a cybersecurity analyst specializing in
+SaaS compliance. Evaluate the target company's public security posture:
+trust/security page, SOC 2 Type II report availability, data encryption
+mentions, SSO/MFA support, GDPR/DPA documentation, incident response
+policy, and subprocessor transparency. Score readiness 1-10...."""
+
+USER_MESSAGE_TEMPLATE = (
+    "Evaluate this SaaS product for SOC 2 / ISO 27001 readiness: {url}\n\n"
+    "Check their security page, docs, trust center, and terms of service."
+)
+
+REPORT_HEADER_TAG = "Security Compliance Assessment"
+```
 
 ## License
 
